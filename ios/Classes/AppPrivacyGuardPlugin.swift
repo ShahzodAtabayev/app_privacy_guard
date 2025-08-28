@@ -20,7 +20,6 @@ final class WatermarkOverlay {
             return
         }
 
-        // ❗️UIWindowScene tipini imzoda tilga olmasdan, faqat #available ichida ishlatamiz
         if #available(iOS 13.0, *) {
             guard
                 let scene = UIApplication.shared.connectedScenes
@@ -73,7 +72,9 @@ final class WatermarkOverlay {
     }
 
     private func updateConstraints(size: CGFloat, offsetY: CGFloat) {
-        guard let v = window?.rootViewController?.view else { return }
+        guard let v = window?.rootViewController?.view else {
+            return
+        }
         NSLayoutConstraint.deactivate(imageView.constraints)
         NSLayoutConstraint.activate([
                                         imageView.centerXAnchor.constraint(equalTo: v.centerXAnchor),
@@ -84,8 +85,12 @@ final class WatermarkOverlay {
     }
 
     func update(size: CGFloat? = nil, offsetY: CGFloat? = nil, alpha: CGFloat? = nil) {
-        if let a = alpha { imageView.alpha = a }
-        if let s = size, let o = offsetY { updateConstraints(size: s, offsetY: o) }
+        if let a = alpha {
+            imageView.alpha = a
+        }
+        if let s = size, let o = offsetY {
+            updateConstraints(size: s, offsetY: o)
+        }
     }
 
     func hide() {
@@ -170,23 +175,30 @@ public class AppPrivacyGuardPlugin: NSObject, FlutterPlugin {
     private func keyWindow() -> UIWindow? {
         if #available(iOS 13.0, *) {
             return UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow }
+            .compactMap {
+                $0 as? UIWindowScene
+            }
+            .flatMap {
+                $0.windows
+            }
+            .first {
+                $0.isKeyWindow
+            }
         } else {
             return UIApplication.shared.keyWindow
         }
     }
 
     private func attachBlur() {
-        guard blurView == nil, let window = keyWindow() else { return }
+        guard blurView == nil, let window = keyWindow() else {
+            return
+        }
         let effect = UIBlurEffect(style: .regular)
         let bv = UIVisualEffectView(effect: effect)
         bv.frame = window.bounds
         bv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         window.addSubview(bv)
         blurView = bv
-        // Eslatma: Watermark alohida UIWindow’da bo‘lgani uchun blur ustida ko‘rinadi
     }
 
     private func removeBlur() {

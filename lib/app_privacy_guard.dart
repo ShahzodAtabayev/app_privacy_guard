@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 
@@ -30,6 +31,9 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     double offsetY = 6,
     double alpha = 0.9,
   }) async {
+    if (Platform.isAndroid) {
+      return;
+    }
     await _channel.invokeMethod('showWatermark', {
       'assetName': assetName,
       'base64': base64Png,
@@ -73,27 +77,61 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
   }
 
+  bool _suspended = false;
+  Timer? _pendingTimer;
+
+  /// Biometric/pay dialogs vaqtida auto-blurni vaqtincha o'chirish.
+  void suspendAuto() {
+    _suspended = true;
+    _pendingTimer?.cancel();
+    _pendingTimer = null;
+  }
+
+  void resumeAuto() {
+    _suspended = false;
+  }
+
+  /// Qulay wrapper: biror ishni blur'siz bajarish
+  Future<T> executeWithoutBlur<T>(Future<T> Function() action) async {
+    final wasSuspended = _suspended;
+    suspendAuto();
+    try {
+      return await action();
+    } finally {
+      if (!wasSuspended) resumeAuto();
+    }
+  }
+
+  int autoDelayMs = 350;
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!_auto) return;
+    void apply(bool enable) {
+      if (_mode == PrivacyMode.blur) {
+        enable ? enableBlur() : disableBlur();
+      } else {
+        enable ? enableSecure() : disableSecure();
+      }
+    }
+
     switch (state) {
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
-        if (_mode == PrivacyMode.blur) {
-          enableBlur();
-        } else {
-          enableSecure();
-        }
+        if (_suspended) return;
+        _pendingTimer?.cancel();
+        _pendingTimer = Timer(Duration(milliseconds: autoDelayMs), () {
+          if (!_suspended) apply(true);
+        });
         break;
+
       case AppLifecycleState.resumed:
-        if (_mode == PrivacyMode.blur) {
-          disableBlur();
-        } else {
-          disableSecure();
-        }
+        _pendingTimer?.cancel();
+        _pendingTimer = null;
+        apply(false);
         break;
+
       case AppLifecycleState.detached:
-        break;
       case AppLifecycleState.hidden:
         break;
     }
