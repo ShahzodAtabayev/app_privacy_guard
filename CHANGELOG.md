@@ -4,3 +4,5 @@
 ## 0.0.2
 - Fix: android watermark issue
 
+## 0.0.3
+- Fix: auto blur issue
