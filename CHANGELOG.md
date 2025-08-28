@@ -6,3 +6,6 @@
 
 ## 0.0.3
 - Fix: auto blur issue
+
+## 0.0.4
+- Minor changes
