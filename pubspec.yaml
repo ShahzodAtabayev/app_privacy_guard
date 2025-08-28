@@ -1,6 +1,6 @@
 name: app_privacy_guard
 description: Blur in app switcher, Android secure flag, and iOS Dynamic Island watermark to protect sensitive UI.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/ShahzodAtabayev/app_privacy_guard
 repository: https://github.com/ShahzodAtabayev/app_privacy_guard
 issue_tracker: https://github.com/ShahzodAtabayev/app_privacy_guard/issues
