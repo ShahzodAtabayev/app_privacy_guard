@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 enum PrivacyMode { blur, secure }
 
@@ -13,17 +13,16 @@ class AppPrivacyGuard with WidgetsBindingObserver {
 
   static const _channel = MethodChannel('app_privacy_guard');
 
-  /// --- Manual controls (blur/secure) ---
+  // ---- Manual controls ----
   Future<void> enableBlur() => _channel.invokeMethod('enableBlur');
 
   Future<void> disableBlur() => _channel.invokeMethod('disableBlur');
 
-  /// Android only (iOS no-op)
   Future<void> enableSecure() => _channel.invokeMethod('enableSecure');
 
   Future<void> disableSecure() => _channel.invokeMethod('disableSecure');
 
-  /// --- Watermark controls (iOS) ---
+  // ---- Watermark (iOS only) ----
   Future<void> showWatermark({
     String? assetName,
     String? base64Png,
@@ -31,9 +30,7 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     double offsetY = 6,
     double alpha = 0.9,
   }) async {
-    if (Platform.isAndroid) {
-      return;
-    }
+    if (!Platform.isIOS) return;
     await _channel.invokeMethod('showWatermark', {
       'assetName': assetName,
       'base64': base64Png,
@@ -43,9 +40,13 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     });
   }
 
-  Future<void> hideWatermark() => _channel.invokeMethod('hideWatermark');
+  Future<void> hideWatermark() async {
+    if (!Platform.isIOS) return;
+    await _channel.invokeMethod('hideWatermark');
+  }
 
   Future<void> updateWatermark({double? size, double? offsetY, double? alpha}) async {
+    if (!Platform.isIOS) return;
     await _channel.invokeMethod('updateWatermark', {
       if (size != null) 'size': size,
       if (offsetY != null) 'offsetY': offsetY,
@@ -53,14 +54,13 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     });
   }
 
-  /// Kichik helper: assetdan PNG’ni base64 ga o‘girib yuborish (agar iOS asset ishlatmasangiz)
-  static Future<String> loadAssetPngAsBase64(String assetPath, AssetBundle? bundle) async {
+  static Future<String> loadAssetPngAsBase64(String assetPath, [AssetBundle? bundle]) async {
     final b = bundle ?? rootBundle;
     final bytes = await b.load(assetPath);
     return base64Encode(bytes.buffer.asUint8List());
   }
 
-  /// --- Auto mode (With dart lifecycle) ---
+  // ---- Auto mode ----
   bool _auto = false;
   PrivacyMode _mode = PrivacyMode.blur;
 
@@ -75,38 +75,40 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     if (!_auto) return;
     _auto = false;
     WidgetsBinding.instance.removeObserver(this);
+    _inactiveTimer?.cancel();
+    _inactiveTimer = null;
   }
 
+  // System dialoglar vaqtida vaqtincha o‘chirib turish flag’i
   bool _suspended = false;
-  Timer? _pendingTimer;
 
-  /// Biometric/pay dialogs vaqtida auto-blurni vaqtincha o'chirish.
   void suspendAuto() {
     _suspended = true;
-    _pendingTimer?.cancel();
-    _pendingTimer = null;
+    _inactiveTimer?.cancel();
+    _inactiveTimer = null;
   }
 
   void resumeAuto() {
     _suspended = false;
   }
 
-  /// Qulay wrapper: biror ishni blur'siz bajarish
   Future<T> executeWithoutBlur<T>(Future<T> Function() action) async {
-    final wasSuspended = _suspended;
+    final was = _suspended;
     suspendAuto();
     try {
       return await action();
     } finally {
-      if (!wasSuspended) resumeAuto();
+      if (!was) resumeAuto();
     }
   }
 
-  int autoDelayMs = 350;
+  Timer? _inactiveTimer;
+  int inactiveDelayMs = 600;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_auto) return;
+    if (!_auto || _suspended) return;
+
     void apply(bool enable) {
       if (_mode == PrivacyMode.blur) {
         enable ? enableBlur() : disableBlur();
@@ -116,23 +118,32 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     }
 
     switch (state) {
-      case AppLifecycleState.paused:
-        if (_suspended) return;
-        _pendingTimer?.cancel();
-        _pendingTimer = Timer(Duration(milliseconds: autoDelayMs), () {
-          if (!_suspended) apply(true);
+      case AppLifecycleState.inactive:
+        // Hech narsa qilmaymiz; faqat kechiktirilgan tekshiruv.
+        _inactiveTimer?.cancel();
+        _inactiveTimer = Timer(Duration(milliseconds: inactiveDelayMs), () {
+          // Agar shu vaqt ichida `paused` kelmagan bo‘lsa — bu system dialog bo‘lgan,
+          // blur yoqmaymiz. `paused` case'da baribir timer cancel bo‘ladi.
         });
         break;
 
+      case AppLifecycleState.paused:
+        // Haqiqiy background: blur/secure yoqiladi
+        _inactiveTimer?.cancel();
+        _inactiveTimer = null;
+        apply(true);
+        break;
+
       case AppLifecycleState.resumed:
-        _pendingTimer?.cancel();
-        _pendingTimer = null;
+        // Foreground: blur/secure o‘chadi
+        _inactiveTimer?.cancel();
+        _inactiveTimer = null;
         apply(false);
         break;
 
-      case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
+        // ignore
         break;
     }
   }
