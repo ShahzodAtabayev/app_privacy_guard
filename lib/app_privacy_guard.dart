@@ -79,7 +79,7 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     _inactiveTimer = null;
   }
 
-  // System dialoglar vaqtida vaqtincha o‘chirib turish flag’i
+  // system dialog paytida vaqtincha o‘chirib turish flag’i
   bool _suspended = false;
 
   void suspendAuto() {
@@ -103,47 +103,58 @@ class AppPrivacyGuard with WidgetsBindingObserver {
   }
 
   Timer? _inactiveTimer;
-  int inactiveDelayMs = 600;
+  int inactiveDelayMs = 600; // 0.6s
+
+  bool _blurred = false;
+
+  Future<void> _apply(bool enable) async {
+    if (enable && !_blurred) {
+      _blurred = true;
+      if (_mode == PrivacyMode.blur) {
+        await enableBlur();
+      } else {
+        await enableSecure();
+      }
+    } else if (!enable && _blurred) {
+      _blurred = false;
+      if (_mode == PrivacyMode.blur) {
+        await disableBlur();
+      } else {
+        await disableSecure();
+      }
+    }
+  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!_auto || _suspended) return;
 
-    void apply(bool enable) {
-      if (_mode == PrivacyMode.blur) {
-        enable ? enableBlur() : disableBlur();
-      } else {
-        enable ? enableSecure() : disableSecure();
-      }
-    }
-
     switch (state) {
       case AppLifecycleState.inactive:
-        // Hech narsa qilmaymiz; faqat kechiktirilgan tekshiruv.
+        // system dialoglarga tushganda blur chiqmasligi uchun kechiktiramiz
         _inactiveTimer?.cancel();
         _inactiveTimer = Timer(Duration(milliseconds: inactiveDelayMs), () {
-          // Agar shu vaqt ichida `paused` kelmagan bo‘lsa — bu system dialog bo‘lgan,
-          // blur yoqmaymiz. `paused` case'da baribir timer cancel bo‘ladi.
+          // Agar shu vaqt ichida paused/hidden kelmagan bo‘lsa — system dialog bo‘lgan,
+          // blur yoqmaymiz.
         });
         break;
 
       case AppLifecycleState.paused:
-        // Haqiqiy background: blur/secure yoqiladi
+      case AppLifecycleState.hidden:
+        // haqiqiy background: blur/secure yoqiladi
         _inactiveTimer?.cancel();
         _inactiveTimer = null;
-        apply(true);
+        _apply(true);
         break;
 
       case AppLifecycleState.resumed:
-        // Foreground: blur/secure o‘chadi
+        // foregroundga qaytdi
         _inactiveTimer?.cancel();
         _inactiveTimer = null;
-        apply(false);
+        _apply(false);
         break;
 
       case AppLifecycleState.detached:
-      case AppLifecycleState.hidden:
-        // ignore
         break;
     }
   }
