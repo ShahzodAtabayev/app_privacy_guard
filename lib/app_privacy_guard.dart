@@ -116,7 +116,6 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     }
 
     switch (state) {
-      case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
         if (_suspended) return;
         _pendingTimer?.cancel();
@@ -131,6 +130,7 @@ class AppPrivacyGuard with WidgetsBindingObserver {
         apply(false);
         break;
 
+      case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
         break;
