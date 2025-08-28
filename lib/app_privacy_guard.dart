@@ -103,7 +103,7 @@ class AppPrivacyGuard with WidgetsBindingObserver {
   }
 
   Timer? _inactiveTimer;
-  int inactiveDelayMs = 600; // 0.6s
+  int inactiveDelayMs = 100; // 0.6s
 
   bool _blurred = false;
 
@@ -127,8 +127,8 @@ class AppPrivacyGuard with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('--------------------didChangeAppLifecycleState: ${state.name}');
     if (!_auto || _suspended) return;
-
     switch (state) {
       case AppLifecycleState.inactive:
         // system dialoglarga tushganda blur chiqmasligi uchun kechiktiramiz
@@ -136,6 +136,7 @@ class AppPrivacyGuard with WidgetsBindingObserver {
         _inactiveTimer = Timer(Duration(milliseconds: inactiveDelayMs), () {
           // Agar shu vaqt ichida paused/hidden kelmagan bo‘lsa — system dialog bo‘lgan,
           // blur yoqmaymiz.
+          _apply(true);
         });
         break;
 
