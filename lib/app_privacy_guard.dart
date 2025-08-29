@@ -79,7 +79,6 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     _inactiveTimer = null;
   }
 
-  // system dialog paytida vaqtincha o‘chirib turish flag’i
   bool _suspended = false;
 
   void suspendAuto() {
@@ -131,25 +130,20 @@ class AppPrivacyGuard with WidgetsBindingObserver {
     if (!_auto || _suspended) return;
     switch (state) {
       case AppLifecycleState.inactive:
-        // system dialoglarga tushganda blur chiqmasligi uchun kechiktiramiz
         _inactiveTimer?.cancel();
         _inactiveTimer = Timer(Duration(milliseconds: inactiveDelayMs), () {
-          // Agar shu vaqt ichida paused/hidden kelmagan bo‘lsa — system dialog bo‘lgan,
-          // blur yoqmaymiz.
           _apply(true);
         });
         break;
 
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
-        // haqiqiy background: blur/secure yoqiladi
         _inactiveTimer?.cancel();
         _inactiveTimer = null;
         _apply(true);
         break;
 
       case AppLifecycleState.resumed:
-        // foregroundga qaytdi
         _inactiveTimer?.cancel();
         _inactiveTimer = null;
         _apply(false);

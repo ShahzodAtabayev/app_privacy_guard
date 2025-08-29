@@ -4,12 +4,12 @@ import 'package:app_privacy_guard/app_privacy_guard.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppPrivacyGuard.instance.showWatermark(
-    assetName: 'logo_beepul_horizontal_dark', // iOS Assets.xcassets
+    assetName: 'logo_beepul_horizontal_dark',
     size: 60,
     offsetY: -72,
     alpha: 1,
   );
-  AppPrivacyGuard.instance.startAuto(mode: PrivacyMode.blur); // or PrivacyMode.secure (Android)
+  AppPrivacyGuard.instance.startAuto(mode: PrivacyMode.blur);
 
   runApp(const MyApp());
 }
