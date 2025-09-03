@@ -1,6 +1,47 @@
 import Flutter
 import UIKit
 
+enum Device {
+    static var modelIdentifier: String {
+        #if targetEnvironment(simulator)
+        return ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] ?? "iOS"
+        #else
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let mirror = Mirror(reflecting: systemInfo.machine)
+        return mirror.children.reduce("") { identifier, element in
+            guard let v = element.value as? Int8, v != 0 else {
+                return identifier
+            }
+            return identifier + String(UnicodeScalar(UInt8(v)))
+        }
+        #endif
+    }
+
+    static var hasDynamicIsland: Bool {
+        let id = modelIdentifier
+
+        let supported: Set<String> = [
+            // iPhone 14 Pro seriya
+            "iPhone15,2", "iPhone15,3",
+            // iPhone 15 seriya
+            "iPhone15,4", "iPhone15,5", "iPhone16,1", "iPhone16,2",
+            // iPhone 16 seriya
+            "iPhone17,1", "iPhone17,2", "iPhone17,3", "iPhone17,4"
+        ]
+
+        if supported.contains(id) {
+            return true
+        }
+
+        if id.starts(with: "iPhone17,") || id.starts(with: "iPhone18,") {
+            return true
+        }
+
+        return false
+    }
+}
+
 // MARK: - Watermark overlay (separate UIWindow)
 final class WatermarkOverlay {
     static let shared = WatermarkOverlay()
@@ -11,6 +52,11 @@ final class WatermarkOverlay {
               size: CGFloat = 22,
               offsetY: CGFloat = 6,
               alpha: CGFloat = 0.9) {
+
+        guard Device.hasDynamicIsland else {
+            hide()
+            return
+        }
 
         if let w = window {
             imageView.image = image
