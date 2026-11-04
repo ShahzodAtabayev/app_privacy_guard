@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -47,11 +48,7 @@ class AppPrivacyGuard with WidgetsBindingObserver {
 
   Future<void> updateWatermark({double? size, double? offsetY, double? alpha}) async {
     if (!Platform.isIOS) return;
-    await _channel.invokeMethod('updateWatermark', {
-      if (size != null) 'size': size,
-      if (offsetY != null) 'offsetY': offsetY,
-      if (alpha != null) 'alpha': alpha,
-    });
+    await _channel.invokeMethod('updateWatermark', {'size': ?size, 'offsetY': ?offsetY, 'alpha': ?alpha});
   }
 
   static Future<String> loadAssetPngAsBase64(String assetPath, [AssetBundle? bundle]) async {

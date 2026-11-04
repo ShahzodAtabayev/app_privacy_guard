@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:app_privacy_guard/app_privacy_guard.dart';
 
 void main() async {

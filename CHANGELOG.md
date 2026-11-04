@@ -15,3 +15,9 @@
 
 ## 0.0.6
 - Minor changes
+
+## 0.1.0
+- Requires Flutter 3.47.0+ / Dart 3.13+.
+- iOS: Swift Package Manager support (sources moved to `ios/app_privacy_guard/`), CocoaPods still supported. Minimum iOS 15.0. Privacy manifest is now bundled.
+- Android: Gradle scripts migrated to Kotlin DSL (`build.gradle.kts`), AGP 9.1, Java 17, minSdk 24, compileSdk 36.
+- Added `.pubignore`.
