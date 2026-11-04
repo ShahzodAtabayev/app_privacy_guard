@@ -1,0 +1,60 @@
+# Files excluded from the published package (`dart pub publish`).
+# NOTE: when .pubignore exists, pub ignores .gitignore in the same directory,
+# so the relevant .gitignore rules are repeated here.
+
+# Tooling / IDE
+.dart_tool/
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+.github/
+.claude/
+CLAUDE.md
+.metadata
+.flutter-plugins
+.flutter-plugins-dependencies
+migrate_working_dir/
+
+# Build output & lock files
+build/
+.build/
+.swiftpm/
+pubspec.lock
+coverage/
+*.log
+
+# Android local/build state
+.gradle/
+.kotlin/
+.cxx/
+local.properties
+**/android/**/gradle-wrapper.jar
+**/android/gradlew
+**/android/gradlew.bat
+
+# iOS local/build state
+xcuserdata/
+DerivedData/
+Pods/
+.symlinks/
+Podfile.lock
+Package.resolved
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/.last_build_id
+GeneratedPluginRegistrant.*
+
+# Signing
+key.properties
+*.keystore
+*.jks
+
+# Tests are not needed by package consumers
+/test/
+example/test/
+example/integration_test/
+android/src/test/

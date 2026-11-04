@@ -36,6 +36,14 @@ Run:
 flutter pub get
 ```
 
+### Requirements
+
+| | Minimum |
+|---|---|
+| Flutter | 3.47.0 (Dart 3.13) |
+| iOS | 15.0 — Swift Package Manager and CocoaPods are both supported |
+| Android | API 24, AGP 9.x, Java 17 |
+
 ---
 
 ## Usage
